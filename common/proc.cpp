@@ -123,7 +123,20 @@ int PkgProcessFun_CmdSignalLightState(void *p, string content) {
         return -1;
     }
 
+    if (msg.crossID.empty()) {
+        LOG(ERROR) << "crossID empty," << content;
+        return -1;
+    }
+
+
     auto *data = Data::instance();
+
+    //判断下路口id是否一致
+    if (msg.crossID != data->plateId) {
+        LOG(ERROR) << "crossID:" << msg.crossID << "!=" << data->plateId;
+        return -1;
+    }
+
     auto dataUnit = data->signalLightStates;
     SignalLightState msgSend;
     std::unique_lock<std::mutex> lock(data->mtx_signalLightStates);
