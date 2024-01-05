@@ -28,6 +28,9 @@ typedef struct {
     int thresholdReconnect = 5;//多久没回复信息就重连,单位s
     bool isUseThresholdReconnect = true;
 
+    string eocConfPath;
+    string iniPath;
+
     ConfSignalLight confSignalLight;
 } LocalConfig;
 

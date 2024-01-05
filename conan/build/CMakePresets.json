@@ -18,8 +18,8 @@
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
                 "CMAKE_BUILD_TYPE": "Debug"
             },
-            "toolchainFile": "/home/lining/CLionProjects/RVDataFusionServer/conan/build/conan_toolchain.cmake",
-            "binaryDir": "/home/lining/CLionProjects/RVDataFusionServer/conan/build"
+            "toolchainFile": "/home/lining/CLionProjects/openDevices/conan/build/conan_toolchain.cmake",
+            "binaryDir": "/home/lining/CLionProjects/openDevices/conan/build"
         }
     ],
     "buildPresets": [

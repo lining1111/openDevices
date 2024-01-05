@@ -1,4 +1,4 @@
-script_folder="/home/lining/CLionProjects/RVDataFusionServer/conan/build"
+script_folder="/home/lining/CLionProjects/openDevices/conan/build"
 echo "echo Restoring environment" > "$script_folder/deactivate_conanbuildenv-debug-x86_64.sh"
 for v in 
 do

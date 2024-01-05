@@ -38,6 +38,7 @@ DEFINE_string(msgType, "", "输出制定的信息类型，默认空，多个信�
 DEFINE_int32(summaryFs, 10, "总结信息打印的频率，默认为10");
 
 DEFINE_string(iniPath, "openDevicesConf.ini", "配置文件路径，默认openDevicesConf.ini");
+DEFINE_string(eocConfPath, "eoc_configure.db", "eoc配置文件路径，默认eoc_configure.db");
 
 DEFINE_int32(thresholdReconnect, 5, "多久没收到回复信息就重连，单位秒，默认 5");
 DEFINE_bool(isUseThresholdReconnect, false, "是否启用没收到回复信息就重连，默认 false");
@@ -57,6 +58,9 @@ int main(int argc, char **argv) {
     if (!FLAGS_msgType.empty()) {
         localConfig.msgType = os::split(FLAGS_msgType, ",");
     }
+    localConfig.iniPath = FLAGS_iniPath;
+    localConfig.eocConfPath = FLAGS_eocConfPath;
+
     if (FLAGS_summaryFs > 0) {
         localConfig.summaryFs = FLAGS_summaryFs;
     }

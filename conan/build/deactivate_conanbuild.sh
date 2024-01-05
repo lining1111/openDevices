@@ -1,1 +1,1 @@
-. "/home/lining/CLionProjects/RVDataFusionServer/conan/build/deactivate_conanbuildenv-debug-x86_64.sh"
+. "/home/lining/CLionProjects/openDevices/conan/build/deactivate_conanbuildenv-debug-x86_64.sh"

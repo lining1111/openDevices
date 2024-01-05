@@ -6,6 +6,9 @@
 #include <sqlite3.h>
 #include <algorithm>
 #include <glog/logging.h>
+#include "common/config.h"
+#include "os/os.h"
+#include "myTcp/MyTcpServer.hpp"
 
 Data *Data::m_pInstance = nullptr;
 
@@ -19,6 +22,20 @@ Data *Data::instance() {
         m_pInstance->getPlatId();
         //2初始化数据
         m_pInstance->signalLightStates.clear();
+        SignalLightState item;
+        item.timestamp = os::getTimestampMs();
+        item.crossID = m_pInstance->plateId;
+        item.hardCode = m_pInstance->matrixNo;
+        for (int i = 0; i < 8; i++) {
+            SignalLightState_lstIntersections_item item1;
+            item1.matrixNo = to_string(i);
+            item1.left = -1;//未知
+            item1.right = -1;
+            item1.straight = -1;
+            item.lstIntersections.push_back(item1);
+        }
+        m_pInstance->signalLightStates.push_back(item);
+        m_pInstance->signalLightStates.push_back(item);
 
         m_pInstance->isRun = true;
     }
@@ -75,7 +92,7 @@ int Data::getPlatId() {
     //打开数据库
     sqlite3 *db;
     string dbName;
-    dbName = "./eoc_configure.db";
+    dbName = localConfig.eocConfPath;
     //open
     int rc = sqlite3_open(dbName.c_str(), &db);
     if (rc != SQLITE_OK) {
@@ -106,5 +123,45 @@ int Data::getPlatId() {
     LOG(WARNING) << "plateId:" << plateId;
     sqlite3_free_table(result);
     sqlite3_close(db);
+    return 0;
+}
+
+int Data::broadcastSignalLightStates() {
+    //遍历接入本地server的客户端，将最新的灯态广播出去
+    SignalLightState msgSend;
+    std::unique_lock<std::mutex> lock(mtx_signalLightStates);
+    if (signalLightStates.empty()) {
+        msgSend.crossID = plateId;
+        msgSend.hardCode = matrixNo;
+        msgSend.timestamp = os::getTimestampMs();
+    } else {
+        msgSend = signalLightStates.back();
+    }
+
+    uint32_t deviceNo = stoi(matrixNo.substr(0, 10));
+    Pkg pkg;
+    msgSend.PkgWithoutCRC(sn_SignalLightState, deviceNo, pkg);
+    sn_SignalLightState++;
+    lock.unlock();
+
+    std::unique_lock<std::mutex> lock1(conns_mutex);
+    for (auto conn: conns) {
+        if (conn != nullptr) {
+            auto local = (MyTcpServerHandler *) conn;
+            string ip = local->_peerAddress;
+
+            string msgType = "SignalLightState";
+
+            if (!local->SendBase(pkg)) {
+                LOG_IF(INFO, isShowMsgType(msgType)) << "client ip:" << ip << " " << msgType << ",发送消息失败";
+            } else {
+                LOG_IF(INFO, isShowMsgType(msgType)) << "client ip:" << ip << " " << msgType << ",发送消息成功，"
+                                                     << "hardCode:" << msgSend.hardCode << " crossID:"
+                                                     << msgSend.crossID
+                                                     << "timestamp:" << (uint64_t) msgSend.timestamp;
+            }
+        }
+    }
+
     return 0;
 }

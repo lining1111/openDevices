@@ -11,6 +11,7 @@
 #include <thread>
 #include <string>
 #include <future>
+#include "common/config.h"
 
 using namespace std;
 
@@ -57,6 +58,86 @@ using Poco::Net::NetException;
  *
  */
 
+
+/**
+ * SLType2本地全局变量，通道状态数组队列
+ * 处理：
+ * 1、初始化时，往队列插入2个单元，都是1状态。同时调用车道灯态和通道转换函数更新全局Data的缓存内容，头部是old，尾部是new。
+ * 2、接收到数据后，根据通道号，更新new通道状态，同时对比old和new的所有通道状态是否改变，如果改变，则将new复制到old，同时调用车道灯态和通道转换函数更新全局Data的缓存内容
+ *  状态改变后，调用服务器广播函数，将灯态的变化广播出去
+ */
+
+class SLType2ChannelState {
+public:
+// 通道状态数组
+    typedef struct {
+        int channel;//1-16
+        int state;//0亮 1灭
+    } SLType2ChannelStateItem;
+
+    int channelNum = 16;//通道数
+    vector<vector<SLType2ChannelStateItem>> store;//存储的状态，队列最新状态在最后面，默认最多2个内容
+
+    SLType2ChannelState();
+
+    SLType2ChannelState(int _channelNum);
+
+    ~SLType2ChannelState();
+
+    void init();
+
+    /**
+     * 对应 心跳包的所有状态
+     * @param allState
+     * @return true 新旧状态不一致 false 新旧状态一致
+     */
+    bool update(uint32_t allState);
+
+    /**
+     * 对应 实时数据的单通道状态
+     * @param channelNo
+     * @param channelState
+     * @return true 新旧状态不一致 false 新旧状态一致
+     */
+    bool update(int channelNo, int channelState);
+
+    void printStore();
+
+};
+
+
+extern SLType2ChannelState *slType2ChannelState;
+
+
+//灯态与通道的对应关系
+class SLType2Relation {
+public:
+    //转换函数用的关系列表 方向-(左转or直行or右转)-通道号
+    typedef struct {
+        string dir;
+        string lightName;//"left" "right" "straight"
+        int channel;// -1为未关联通道
+    } SLState_Channel;
+
+    int maxDirNum = 8;//最多支持8个方向
+    vector<SLState_Channel> relations_SLState_Channel;//关系列表，可以通过ini文件获取格式为 [SL1]下left=1,right=2,straight=3 [SL2]下left=4,right=5,straight=6,依次类推
+    SLType2Relation();
+
+    ~SLType2Relation();
+
+    int getFromINI(string path);
+
+};
+
+extern SLType2Relation *slType2Relation;
+
+
+//全局， slType2ChannelState 通过灯态与通道的对应关系 slType2Relation，将现在所有的通道状态转换为灯态 data->signalLightStates
+
+int SLType2GetSignalLightStates();
+
+
+
 #pragma pack(1)
 typedef struct {
     uint16_t head;
@@ -81,6 +162,7 @@ public:
     StreamSocket _socket;
     std::string _peerAddress;
 
+    std::string msgType = "SignalLight";
     int BUFFER_SIZE = 1024 * 4;
     bool _isRun = false;
     RingBuffer *rb = nullptr;
@@ -139,12 +221,6 @@ public:
     bool isRun = false;
     bool isStartBusiness = false;
     shared_future<int> future_keep;
-    typedef struct {
-        int channel;//通道号
-        int status;//0亮 1灭
-    } ChannelStatus;
-
-    vector<ChannelStatus> channelStatusList;//通道状态,索引0---channel1,以此类推
 
 public:
     SLType2(int port);

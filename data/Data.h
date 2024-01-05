@@ -24,7 +24,8 @@ public:
     string plateId;
 public:
     mutex mtx_signalLightStates;
-    vector<SignalLightState> signalLightStates;
+    vector<SignalLightState> signalLightStates;//最多2个，0旧的，1新的
+    uint64_t sn_SignalLightState = 0;
 
 public:
     static Data *instance();
@@ -32,6 +33,8 @@ public:
     ~Data() {
         isRun = false;
     }
+
+    int broadcastSignalLightStates();
 
 private:
     int getMatrixNo();

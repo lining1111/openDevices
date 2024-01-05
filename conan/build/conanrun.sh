@@ -1,1 +1,1 @@
-. "/home/lining/CLionProjects/RVDataFusionServer/conan/build/conanrunenv-debug-x86_64.sh"
+. "/home/lining/CLionProjects/openDevices/conan/build/conanrunenv-debug-x86_64.sh"

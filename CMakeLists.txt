@@ -47,3 +47,5 @@ list(REMOVE_ITEM SRC_FILES ./main.cpp)
 add_executable(openDevices main.cpp ${SRC_FILES})
 target_link_libraries(openDevices ${LIBS})
 redefine_file_macro(openDevices)
+
+add_subdirectory(test)

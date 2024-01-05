@@ -5,6 +5,235 @@
 #include "SLType2.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <bitset>
+#include "os/os.h"
+
+SLType2ChannelState *slType2ChannelState = nullptr;
+
+SLType2Relation *slType2Relation = nullptr;
+
+SLType2ChannelState::SLType2ChannelState() {
+    init();
+}
+
+SLType2ChannelState::SLType2ChannelState(int _channelNum) : channelNum(_channelNum) {
+    init();
+}
+
+SLType2ChannelState::~SLType2ChannelState() {
+
+}
+
+void SLType2ChannelState::init() {
+    vector<SLType2ChannelStateItem> item;
+    for (int i = 0; i < this->channelNum; i++) {
+        SLType2ChannelStateItem item1;
+        item1.channel = i + 1;
+        item1.state = 1;
+        item.push_back(item1);
+    }
+    this->store.push_back(item);
+    this->store.push_back(item);
+
+}
+
+bool SLType2ChannelState::update(uint32_t allState) {
+    //将旧的更新到之前新的
+    this->store.at(0) = this->store.at(1);
+    //更新现在的状态
+    auto now = this->store.at(1);
+    auto old = this->store.at(0);
+    //将 uint32_t 转换为bitset 32
+    bitset<32> bs(allState);
+    //打印转换细节
+    VLOG(2) << "allState:" << to_string(allState) << "  bs:" << bs.to_string() << endl;
+
+    for (int i = 0; i < this->channelNum; i++) {
+        now.at(i).state = bs[i];
+    }
+
+    //更新状态
+    this->store.at(1) = now;
+    //打印下新旧数组值
+    printStore();
+
+    //对比新旧是否一致
+    bool ret = true;
+    for (int i = 0; i < this->channelNum; i++) {
+        if (now.at(i).state != old.at(i).state) {
+            ret = false;
+            break;
+        }
+    }
+    return ret;
+}
+
+bool SLType2ChannelState::update(int channelNo, int channelState) {
+    //将旧的更新到之前新的
+    this->store.at(0) = this->store.at(1);
+    //更新现在的状态
+    auto now = this->store.at(1);
+    auto old = this->store.at(0);
+
+    //打印转换细节
+    VLOG(2) << "channelNo:" << to_string(channelNo) << "，channelState:" << to_string(channelState);
+
+    for (int i = 0; i < this->channelNum; i++) {
+        if (now.at(i).channel == channelNo) {
+            now.at(i).state = channelState;
+            break;
+        }
+    }
+
+    //更新状态
+    this->store.at(1) = now;
+    //打印下新旧数组值
+    printStore();
+
+    //对比新旧是否一致
+    bool ret = true;
+    for (int i = 0; i < this->channelNum; i++) {
+        if (now.at(i).state != old.at(i).state) {
+            ret = false;
+            break;
+        }
+    }
+    return ret;
+}
+
+void SLType2ChannelState::printStore() {
+    string content;
+    //old
+    content.clear();
+    content += "old:";
+    for (int i = 0; i < this->channelNum; i++) {
+        content += to_string(store.at(0).at(i).channel);
+        content += ":";
+        content += to_string(store.at(0).at(i).state);
+        content += ",";
+    }
+    VLOG(2) << content;
+    content.clear();
+    content += "new:";
+    for (int i = 0; i < this->channelNum; i++) {
+        content += to_string(store.at(1).at(i).channel);
+        content += ":";
+        content += to_string(store.at(1).at(i).state);
+        content += ",";
+    }
+    VLOG(2) << content;
+}
+
+SLType2Relation::SLType2Relation() {
+    if (getFromINI(localConfig.iniPath) == 0) {
+        LOG(WARNING) << "SLType2 获取灯态和通道的关系成功";
+    } else {
+        LOG(ERROR) << "SLType2 获取灯态和通道的关系失败";
+    }
+}
+
+SLType2Relation::~SLType2Relation() {
+
+}
+
+#include "Poco/Util/Application.h"
+#include "Poco/Path.h"
+#include "Poco/AutoPtr.h"
+#include "Poco/Util/IniFileConfiguration.h"
+
+int SLType2Relation::getFromINI(string path) {
+    int ret = 0;
+    try {
+        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration(path));
+        for (int i = 0; i < maxDirNum; i++) {
+            SLState_Channel item;
+            string key = "SignalLight_" + to_string(i);
+            item.dir = to_string(i);
+            //left
+            item.lightName = "left";
+            item.channel = pConf->getInt(key + "." + item.lightName, -1);
+            relations_SLState_Channel.push_back(item);
+
+            //right
+            item.lightName = "right";
+            item.channel = pConf->getInt(key + "." + item.lightName, -1);
+            relations_SLState_Channel.push_back(item);
+
+            //straight
+            item.lightName = "straight";
+            item.channel = pConf->getInt(key + "." + item.lightName, -1);
+            relations_SLState_Channel.push_back(item);
+        }
+        ret = 0;
+    }
+    catch (Poco::Exception &exc) {
+        std::cerr << exc.displayText() << std::endl;
+        ret = -1;
+    }
+    return ret;
+}
+
+int SLType2GetSignalLightStates() {
+
+    auto *data = Data::instance();
+    //将旧的更新到旧的上，新的更新到新的上
+    //将未更新的新的赋值到旧的
+    data->signalLightStates.at(0) = data->signalLightStates.at(1);
+    //更新新的
+    auto channelStates = &slType2ChannelState->store.at(1);
+    auto signalLightStates = &data->signalLightStates.at(1);
+
+    //新灯态更新uuid和时间戳
+    uuid_t uuid;
+    char uuid_str[37];
+    memset(uuid_str, 0, 37);
+    uuid_generate_time(uuid);
+    uuid_unparse(uuid, uuid_str);
+    signalLightStates->oprNum = string(uuid_str);
+    signalLightStates->timestamp = os::getTimestampMs();
+
+    //遍历通道状态数组，取出通道号和状态，然后遍历关系图，将状态赋值到关系中是该通道的灯态
+    for (auto &channelState: *channelStates) {
+        int channel = channelState.channel;
+        int state = channelState.state;
+        //灯名---通道
+        for (auto relation: slType2Relation->relations_SLState_Channel) {
+            if (relation.channel == channel) {
+                //通道号相同，将状态赋值给对应的灯态
+                //要更新的方向
+                auto matrixNo = relation.dir;
+                auto lightName = relation.lightName;
+                //遍历灯态数组，根据方向值找到要更新的方向
+                for (auto &signalLightState: signalLightStates->lstIntersections) {
+                    if (signalLightState.matrixNo == matrixNo) {
+                        //方向相同，然后根据灯名更新状态
+                        if (lightName == "left") {
+                            signalLightState.left = state;
+                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
+                                    << to_string(signalLightState.left);
+                        } else if (lightName == "right") {
+                            signalLightState.right = state;
+                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
+                                    << to_string(signalLightState.right);
+                        } else if (lightName == "straight") {
+                            signalLightState.straight = state;
+                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
+                                    << to_string(signalLightState.straight);
+                        } else {
+                            LOG(ERROR) << "未知的灯名:" << lightName;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 
 string GetSLType2PkgStr(SLType2Pkg pkg) {
     string content;
@@ -248,19 +477,112 @@ int SLType2TcpServerHandler::ThreadProcessPkg(SLType2TcpServerHandler *local) {
         if (local->pkgs.pop(pkg)) {
             //根据包的类型，进行不同的处理
             VLOG(2) << "SLType2TcpServerHandler pop pkg success:" << GetSLType2PkgStr(pkg);
+            switch (pkg.head) {
+                case SLType2PkgHead_HeartBeat: {
+                    //处理心跳数据
+                    if (slType2ChannelState != nullptr) {
+
+                        uint32_t allState = ((pkg.data1 & 0xffff0000) >> 16);
+                        if (!slType2ChannelState->update(allState)) {
+                            //状态变化了，通过转换函数更新本地数据，并广播出去
+                            LOG_IF(INFO, isShowMsgType(local->msgType)) << "状态有变化,更新本地数据，并广播出去";
+                            //通过转换函数更新本地数据
+                            SLType2GetSignalLightStates();
+                            //广播
+                            auto *data = Data::instance();
+                            data->broadcastSignalLightStates();
+                        } else {
+                            LOG_IF(INFO, isShowMsgType(local->msgType)) << "状态无变化";
+                        }
+                    }
+                }
+                    break;
+                case SLType2PkgHead_RealTimeData: {
+                    //处理实时数据
+                    //将实时数据的data1转换为通道，实时数据的data2转换为状态
+                    int channel = 0;
+                    int state = 0;
+                    //获取通道
+                    {
+                        bitset<16> bs_1_16(((pkg.data1 & 0xffff0000) >> 16));
+
+                        if (bs_1_16.count() == 1) {
+                            for (int i = 0; i < bs_1_16.size(); i++) {
+                                if (bs_1_16[i]) {
+                                    channel = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        VLOG(2) << "实时数据,data1:" << to_string(pkg.data1) << ",bs:" << bs_1_16.to_string()
+                                << ",channel:" << to_string(channel);
+                    }
+                    //获取状态
+                    {
+                        if (channel != 0) {
+                            //在有通道值的情况下，取值
+                            bitset<16> bs_1_16(((pkg.data2 & 0xffff0000) >> 16));
+
+                            state = bs_1_16[channel - 1];
+                            VLOG(2) << "实时数据,data2:" << to_string(pkg.data2) << ",bs:" << bs_1_16.to_string()
+                                    << ",state:" << to_string(state);
+                        }
+                    }
+
+                    //只有灭的时候才处理
+                    if ((channel != 0) && (state != 0)) {
+                        LOG_IF(INFO, isShowMsgType(local->msgType))
+                                        << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                                        << " 灯灭状态，处理";
+                        if (slType2ChannelState != nullptr) {
+                            if (!slType2ChannelState->update(channel, state)) {
+                                //状态变化了，通过转换函数更新本地数据，并广播出去
+                                LOG_IF(INFO, isShowMsgType(local->msgType)) << "状态有变化,更新本地数据，并广播出去";
+                                //通过转换函数更新本地数据
+                                SLType2GetSignalLightStates();
+                                //广播
+                                auto *data = Data::instance();
+                                data->broadcastSignalLightStates();
+                            } else {
+                                LOG_IF(INFO, isShowMsgType(local->msgType)) << "状态无变化";
+                            }
+                        }
+                    } else {
+                        LOG_IF(INFO, isShowMsgType(local->msgType))
+                                        << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                                        << " 灯亮状态，不处理";
+                    }
+                }
+                    break;
+                default: {
+
+                }
+                    break;
+            }
+
         }
-        LOG(WARNING) << local->_peerAddress << " ThreadProcessPkg end";
-        return 0;
     }
+    LOG(WARNING) << local->_peerAddress << " ThreadProcessPkg end";
+    return 0;
 }
 
 
 SLType2::SLType2(int port) : _port(port) {
-
+    if (slType2ChannelState == nullptr) {
+        slType2ChannelState = new SLType2ChannelState(16);
+    }
+    if (slType2Relation == nullptr) {
+        slType2Relation = new SLType2Relation();
+    }
 }
 
 SLType2::SLType2() {
-
+    if (slType2ChannelState == nullptr) {
+        slType2ChannelState = new SLType2ChannelState(16);
+    }
+    if (slType2Relation == nullptr) {
+        slType2Relation = new SLType2Relation();
+    }
 }
 
 SLType2::~SLType2() {
@@ -274,6 +596,11 @@ SLType2::~SLType2() {
         } catch (exception &e) {
             LOG(ERROR) << e.what();
         }
+    }
+
+    if (slType2ChannelState != nullptr) {
+        delete slType2ChannelState;
+        slType2ChannelState = nullptr;
     }
 }
 
@@ -349,4 +676,3 @@ int SLType2::ThreadKeep(SLType2 *local) {
     LOG(WARNING) << local->_port << "-ThreadKeep STOP";
     return 0;
 }
-

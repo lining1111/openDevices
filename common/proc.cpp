@@ -102,7 +102,6 @@ int PkgProcessFun_CmdHeartBeat(void *p, string content) {
     return 0;
 }
 
-uint64_t sn_SignalLightState = 0;
 int PkgProcessFun_CmdSignalLightState(void *p, string content) {
     VLOG(4) << content;
     int ret = 0;
@@ -138,16 +137,16 @@ int PkgProcessFun_CmdSignalLightState(void *p, string content) {
 
     uint32_t deviceNo = stoi(data->matrixNo.substr(0, 10));
     Pkg pkg;
-    msgSend.PkgWithoutCRC(sn_SignalLightState, deviceNo, pkg);
-    sn_SignalLightState++;
+    msgSend.PkgWithoutCRC(data->sn_SignalLightState, deviceNo, pkg);
+    data->sn_SignalLightState++;
 
     if (!local->SendBase(pkg)) {
         LOG_IF(INFO, isShowMsgType(msgType)) << "client ip:" << ip << " " << msgType << ",发送消息失败";
         ret = -1;
     } else {
         LOG_IF(INFO, isShowMsgType(msgType)) << "client ip:" << ip << " " << msgType << ",发送消息成功，"
-                                             << "hardCode:" << msg.hardCode << " crossID:" << msg.crossID
-                                             << "timestamp:" << (uint64_t) msg.timestamp;
+                                             << "hardCode:" << msgSend.hardCode << " crossID:" << msgSend.crossID
+                                             << "timestamp:" << (uint64_t) msgSend.timestamp;
     }
     return ret;
 

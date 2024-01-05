@@ -20,6 +20,7 @@
 using namespace std;
 
 #include "Poco/Net/StreamSocket.h"
+
 using Poco::Net::StreamSocket;
 
 
@@ -36,7 +37,7 @@ public:
     //接收buffer状态机 Start开始---从接收的数据中寻找帧头开始(开始为特殊字符$)GetHeadStart---找到帧头开始，获取全部帧头信息(一共9字节)GetHead---
     //获取全部帧头信息后，根据帧头信息的帧内容长度信息，获取全部帧内容GetBody---获取完身体后，获取CRC GETCRC---获取完全部帧内容后，回到开始状态Start
     typedef enum {
-        Start = 0, GetHeadStart, GetHead, GetBody, GetCRC,
+        Start = 0, GetHead, GetBody, GetCRC,
     } RecvStatus;//表示状态机已经达到的状态
     RecvStatus status = Start;
     //用于缓存解包
@@ -117,12 +118,12 @@ public:
                         local->rb->Read(&start, sizeof(start));
                         if (start == '$') {
                             //找到开始标志
-                            local->status = GetHeadStart;
+                            local->status = GetHead;
                         }
                     }
                 }
                     break;
-                case GetHeadStart: {
+                case GetHead: {
                     //开始寻找头
                     if (local->rb->GetReadLen() >= (sizeof(PkgHead) - MEMBER_SIZE(PkgHead, tag))) {
                         //获取完整的包头
@@ -133,12 +134,12 @@ public:
                         local->pkgBufferIndex = 0;
                         memcpy(local->pkgBuffer, &local->pkgHead, sizeof(pkgHead));
                         local->pkgBufferIndex += sizeof(pkgHead);
-                        local->status = GetHead;
+                        local->status = GetBody;
                         local->bodyLen = local->pkgHead.len - sizeof(PkgHead) - sizeof(PkgCRC);
                     }
                 }
                     break;
-                case GetHead: {
+                case GetBody: {
                     if (0) {
                         //这个是一次性获取全部包内容
                         if (local->rb->GetReadLen() >= local->bodyLen) {
@@ -146,7 +147,7 @@ public:
                             uint64_t readLen = local->bodyLen;
                             local->rb->Read(local->pkgBuffer + local->pkgBufferIndex, readLen);
                             local->pkgBufferIndex += readLen;
-                            local->status = GetBody;
+                            local->status = GetCRC;
                         }
                     } else {
                         //这个是分多次获取包内容
@@ -158,41 +159,22 @@ public:
                         local->pkgBufferIndex += readLen;
 
                         if (local->bodyLen == 0) {
-                            local->status = GetBody;
+                            local->status = GetCRC;
                         }
                     }
 
                 }
                     break;
-                case GetBody: {
+                case GetCRC: {
                     if (local->rb->GetReadLen() >= sizeof(PkgCRC)) {
                         //获取CRC
                         local->rb->Read(local->pkgBuffer + local->pkgBufferIndex, sizeof(PkgCRC));
                         local->pkgBufferIndex += sizeof(PkgCRC);
-                        local->status = GetCRC;
-                    }
-                }
-                    break;
-                case GetCRC: {
-                    //获取CRC 就获取全部的分包内容，转换为结构体
-                    Pkg pkg;
-
-                    if (Unpack(local->pkgBuffer, local->pkgHead.len, pkg) != 0) {
-                        LOG(ERROR) << local->_peerAddress << "cmd:" << to_string(pkg.head.cmd)
-                                   << " unpack err";
-                        local->bodyLen = 0;//获取分包头后，得到的包长度
-                        if (local->pkgBuffer != nullptr) {
-                            delete[] local->pkgBuffer;
-                            local->pkgBuffer = nullptr;
-                        }
-                        local->pkgBufferIndex = 0;//分包缓冲的索引
-                        local->status = Start;
-                    } else {
-                        //接包正确，判断CRC是否正确
-                        uint16_t crc = Crc16TabCCITT(local->pkgBuffer, local->pkgHead.len - 2);
-                        if (crc != pkg.crc.data) {//CRC校验失败
+                        //获取CRC 就获取全部的分包内容，转换为结构体
+                        Pkg pkg;
+                        if (Unpack(local->pkgBuffer, local->pkgHead.len, pkg) != 0) {
                             LOG(ERROR) << local->_peerAddress << "cmd:" << to_string(pkg.head.cmd)
-                                       << " CRC fail, 计算值:" << crc << ",包内值:" << pkg.crc.data;
+                                       << " unpack err";
                             local->bodyLen = 0;//获取分包头后，得到的包长度
                             if (local->pkgBuffer != nullptr) {
                                 delete[] local->pkgBuffer;
@@ -201,20 +183,34 @@ public:
                             local->pkgBufferIndex = 0;//分包缓冲的索引
                             local->status = Start;
                         } else {
-                            VLOG(4) << local->_peerAddress << " 包内容：" << pkg.body;
-                            //存入分包队列
-                            if (!local->pkgs.push(pkg)) {
-                                VLOG(2) << local->_peerAddress << " 包缓存压入失败";
+                            //接包正确，判断CRC是否正确
+                            uint16_t crc = Crc16TabCCITT(local->pkgBuffer, local->pkgHead.len - 2);
+                            if (crc != pkg.crc.data) {//CRC校验失败
+                                LOG(ERROR) << local->_peerAddress << "cmd:" << to_string(pkg.head.cmd)
+                                           << " CRC fail, 计算值:" << crc << ",包内值:" << pkg.crc.data;
+                                local->bodyLen = 0;//获取分包头后，得到的包长度
+                                if (local->pkgBuffer != nullptr) {
+                                    delete[] local->pkgBuffer;
+                                    local->pkgBuffer = nullptr;
+                                }
+                                local->pkgBufferIndex = 0;//分包缓冲的索引
+                                local->status = Start;
                             } else {
-                                VLOG(2) << local->_peerAddress << " 包缓存压入成功";
+                                VLOG(4) << local->_peerAddress << " 包内容：" << pkg.body;
+                                //存入分包队列
+                                if (!local->pkgs.push(pkg)) {
+                                    VLOG(2) << local->_peerAddress << " 包缓存压入失败";
+                                } else {
+                                    VLOG(2) << local->_peerAddress << " 包缓存压入成功";
+                                }
+                                local->bodyLen = 0;//获取分包头后，得到的包长度
+                                if (local->pkgBuffer != nullptr) {
+                                    delete[] local->pkgBuffer;
+                                    local->pkgBuffer = nullptr;
+                                }
+                                local->pkgBufferIndex = 0;//分包缓冲的索引
+                                local->status = Start;
                             }
-                            local->bodyLen = 0;//获取分包头后，得到的包长度
-                            if (local->pkgBuffer != nullptr) {
-                                delete[] local->pkgBuffer;
-                                local->pkgBuffer = nullptr;
-                            }
-                            local->pkgBufferIndex = 0;//分包缓冲的索引
-                            local->status = Start;
                         }
                     }
                 }
