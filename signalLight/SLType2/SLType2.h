@@ -72,7 +72,7 @@ public:
 // 通道状态数组
     typedef struct {
         int channel;//1-16
-        int state;//0亮 1灭
+        int state = 1;//0亮 1灭
     } SLType2ChannelStateItem;
 
     int channelNum = 16;//通道数
@@ -135,7 +135,6 @@ extern SLType2Relation *slType2Relation;
 //全局， slType2ChannelState 通过灯态与通道的对应关系 slType2Relation，将现在所有的通道状态转换为灯态 data->signalLightStates
 
 int SLType2GetSignalLightStates();
-
 
 
 #pragma pack(1)

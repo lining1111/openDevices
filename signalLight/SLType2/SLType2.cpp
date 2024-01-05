@@ -29,7 +29,7 @@ void SLType2ChannelState::init() {
     for (int i = 0; i < this->channelNum; i++) {
         SLType2ChannelStateItem item1;
         item1.channel = i + 1;
-        item1.state = -1;
+        item1.state = 1;
         item.push_back(item1);
     }
     this->store.push_back(item);
