@@ -31,6 +31,8 @@ typedef struct {
     string eocConfPath;
     string iniPath;
 
+    string roadName;
+
     ConfSignalLight confSignalLight;
 } LocalConfig;
 
