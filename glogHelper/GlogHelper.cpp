@@ -11,6 +11,8 @@
 
 GlogHelper::GlogHelper(std::string _program, uint _keep, std::string _logDir, bool _isSendSTDOUT) :
         program(_program), keepDays(_keep), logDir(_logDir), isSendSTDOUT(_isSendSTDOUT) {
+    FLAGS_log_dir = logDir;
+    printf("日志目录:%s\n",logDir.c_str());
     google::InitGoogleLogging(program.data());
     google::InstallFailureSignalHandler();
     google::InstallFailureWriter(&FatalMessageDump);
@@ -20,8 +22,6 @@ GlogHelper::GlogHelper(std::string _program, uint _keep, std::string _logDir, bo
     if (isSendSTDOUT) {
         FLAGS_logtostdout = true;
     }
-    FLAGS_log_dir = logDir;
-    printf("日志目录:%s\n",logDir.c_str());
     isRun = true;
     futureRun = std::async(std::launch::async, cleaner, this);
 }

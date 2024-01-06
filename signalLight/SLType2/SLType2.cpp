@@ -209,17 +209,17 @@ int SLType2GetSignalLightStates() {
                         //方向相同，然后根据灯名更新状态
                         if (lightName == "left") {
                             signalLightState.left = state;
-                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
                                     << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
                                     << to_string(signalLightState.left);
                         } else if (lightName == "right") {
                             signalLightState.right = state;
-                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
                                     << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
                                     << to_string(signalLightState.right);
                         } else if (lightName == "straight") {
                             signalLightState.straight = state;
-                            VLOG(2) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
+                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
                                     << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
                                     << to_string(signalLightState.straight);
                         } else {
@@ -245,7 +245,7 @@ string GetSLType2PkgStr(SLType2Pkg pkg) {
         v_buf.push_back(buf[i]);
     }
     delete[]buf;
-    content = fmt::format("{}", v_buf);
+    content = fmt::format("{::x}", v_buf);
     return content;
 }
 

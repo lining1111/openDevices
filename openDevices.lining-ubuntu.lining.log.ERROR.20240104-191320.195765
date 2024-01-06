@@ -1,6 +1,0 @@
-Log file created at: 2024/01/04 19:13:20
-Running on machine: lining-ubuntu
-Running duration (h:mm:ss): 0:00:00
-Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
-E20240104 19:13:20.569311 195765 Data.cpp:52] sqlite err:no such table: CL_ParkingArea
-E20240104 19:13:20.569502 195765 Data.cpp:93] sqlite err:no such table: belong_intersection

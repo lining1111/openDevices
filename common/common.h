@@ -45,7 +45,7 @@ namespace common {
     enum CmdType {
         CmdResponse = 0x00,//应答指令
         CmdHeartBeat = 0x02,//心跳
-        CmdSignalLightState = 0xfd,//信号灯状态
+        CmdSignalLightState = 0xfe,//信号灯状态
 
         CmdUnknown = 0xff,
     };

@@ -1,6 +1,0 @@
-Log file created at: 2024/01/04 16:20:49
-Running on machine: lining-ubuntu
-Running duration (h:mm:ss): 0:00:00
-Log line format: [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
-W20240104 16:20:49.601255 129662 GlogHelper.cpp:77] 开启日志定时清理任务
-W20240104 16:20:49.610808 129650 main.cpp:53] 程序工作目录:/home/lining/CLionProjects/openDevices,版本号:0.0.1_20240104_15.59.39

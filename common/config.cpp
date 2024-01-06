@@ -27,7 +27,7 @@ int getConfFromINI(string path) {
         localConfig.confSignalLight.kafkaTopic_c = pConf->getString("signalLight.kafkaTopic_c",
                                                                     "cross_phaseStatus");
         //roadName
-        localConfig.roadName = pConf->getString("road.name", "");
+        localConfig.intersectionName = pConf->getString("intersection.name", "");
 
         ret = 0;
     }

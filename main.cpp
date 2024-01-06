@@ -33,7 +33,11 @@ DEFINE_int32(port, 9002, "本地服务端端口号，默认9002");
 DEFINE_int32(keep, 5, "日志清理周期 单位day，默认5");
 
 DEFINE_bool(isSendSTDOUT, false, "输出到控制台，默认false");
-DEFINE_string(logDir, ".", "日志的输出目录,默认.");
+#ifdef aarch64
+DEFINE_string(logDir, "/mnt/mnt_hd", "日志的输出目录,默认/mnt/mnt_hd");
+#else
+DEFINE_string(logDir, "./", "日志的输出目录,默认./");
+#endif
 DEFINE_string(msgType, "", "输出制定的信息类型，默认空，多个信息类型用英文逗号隔开");
 DEFINE_int32(summaryFs, 10, "总结信息打印的频率，默认为10");
 
