@@ -13,6 +13,9 @@ xpack/1.0.4
 librdkafka/2.3.0
 [options]
 poco*:enable_data_mysql=False
+#gflags*:shared=True
+#glog*:shared=True
+#glog*:with_unwind=False
 [generators]
 CMakeDeps
 CMakeToolchain
