@@ -21,21 +21,7 @@ Data *Data::instance() {
         m_pInstance->getMatrixNo();
         m_pInstance->getPlatId();
         //2初始化数据
-        m_pInstance->signalLightStates.clear();
-        SignalLightState item;
-        item.timestamp = os::getTimestampMs();
-        item.crossID = m_pInstance->plateId;
-        item.hardCode = m_pInstance->matrixNo;
-        for (int i = 0; i < 8; i++) {
-            SignalLightState_lstIntersections_item item1;
-            item1.matrixNo = to_string(i);
-            item1.left = -1;//未知
-            item1.right = -1;
-            item1.straight = -1;
-            item.lstIntersections.push_back(item1);
-        }
-        m_pInstance->signalLightStates.push_back(item);
-        m_pInstance->signalLightStates.push_back(item);
+        m_pInstance->initSignalLightStates();
 
         m_pInstance->isRun = true;
     }
@@ -125,6 +111,27 @@ int Data::getPlatId() {
     sqlite3_close(db);
     return 0;
 }
+
+void Data::initSignalLightStates() {
+    signalLightStates.clear();
+    SignalLightState item;
+    item.timestamp = os::getTimestampMs();
+    item.crossID = plateId;
+    item.hardCode = matrixNo;
+    for (int i = 0; i < 8; i++) {
+        SignalLightState_lstIntersections_item item1;
+        item1.matrixNo = to_string(i);
+        item1.left = -1;//未知
+        item1.right = -1;
+        item1.straight = -1;
+        item.lstIntersections.push_back(item1);
+    }
+    //生成新旧两个
+    for (int i = 0; i < 2; i++) {
+        signalLightStates.push_back(item);
+    }
+}
+
 
 int Data::broadcastSignalLightStates() {
     //遍历接入本地server的客户端，将最新的灯态广播出去

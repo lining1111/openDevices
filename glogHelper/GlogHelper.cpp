@@ -13,15 +13,15 @@ GlogHelper::GlogHelper(std::string _program, uint _keep, std::string _logDir, bo
         program(_program), keepDays(_keep), logDir(_logDir), isSendSTDOUT(_isSendSTDOUT) {
     FLAGS_log_dir = logDir;
     printf("日志目录:%s\n",logDir.c_str());
-    google::InitGoogleLogging(program.data());
-    google::InstallFailureSignalHandler();
-    google::InstallFailureWriter(&FatalMessageDump);
     FLAGS_logbufsecs = 0;//刷新日志buffer的时间，0就是立即刷新
     FLAGS_max_log_size = 300;
     FLAGS_stop_logging_if_full_disk = true; //设置是否在磁盘已满时避免日志记录到磁盘
     if (isSendSTDOUT) {
         FLAGS_logtostdout = true;
     }
+    google::InitGoogleLogging(program.data());
+    google::InstallFailureSignalHandler();
+    google::InstallFailureWriter(&FatalMessageDump);
     isRun = true;
     futureRun = std::async(std::launch::async, cleaner, this);
 }

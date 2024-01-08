@@ -150,20 +150,25 @@ int SLType2Relation::getFromINI(string path) {
             string key = "SignalLight_" + to_string(i);
             item.dir = to_string(i);
             //left
-            item.lightName = "left";
-            item.channel = pConf->getInt(key + "." + item.lightName, -1);
-            relations_SLState_Channel.push_back(item);
-
-            //right
-            item.lightName = "right";
-            item.channel = pConf->getInt(key + "." + item.lightName, -1);
-            relations_SLState_Channel.push_back(item);
-
+            item.left = pConf->getInt(key + "." + "left", -1);
             //straight
-            item.lightName = "straight";
-            item.channel = pConf->getInt(key + "." + item.lightName, -1);
+            item.straight = pConf->getInt(key + "." + "straight", -1);
+            //right
+            item.right = pConf->getInt(key + "." + "right", -1);
+
             relations_SLState_Channel.push_back(item);
+
         }
+
+        //打印下配置获取
+        string content = "SLType2 获取灯态和通道的关系成功\n";
+        for (int i = 0; i < relations_SLState_Channel.size(); i++) {
+            content += "dir:" + relations_SLState_Channel[i].dir +
+                       " left:" + to_string(relations_SLState_Channel[i].left) +
+                       " straight:" + to_string(relations_SLState_Channel[i].straight) +
+                       " right:" + to_string(relations_SLState_Channel[i].right) + "\n";
+        }
+        LOG(WARNING) << content;
         ret = 0;
     }
     catch (Poco::Exception &exc) {
@@ -198,33 +203,61 @@ int SLType2GetSignalLightStates() {
         int state = channelState.state;
         //灯名---通道
         for (auto relation: slType2Relation->relations_SLState_Channel) {
-            if (relation.channel == channel) {
+            //左转相同
+            if (relation.left == channel) {
                 //通道号相同，将状态赋值给对应的灯态
                 //要更新的方向
                 auto matrixNo = relation.dir;
-                auto lightName = relation.lightName;
                 //遍历灯态数组，根据方向值找到要更新的方向
                 for (auto &signalLightState: signalLightStates->lstIntersections) {
                     if (signalLightState.matrixNo == matrixNo) {
                         //方向相同，然后根据灯名更新状态
-                        if (lightName == "left") {
-                            signalLightState.left = state;
-                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
-                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
-                                    << to_string(signalLightState.left);
-                        } else if (lightName == "right") {
-                            signalLightState.right = state;
-                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
-                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
-                                    << to_string(signalLightState.right);
-                        } else if (lightName == "straight") {
-                            signalLightState.straight = state;
-                            LOG_IF(INFO, isShowMsgType("SignalLight")) << "更新灯态:" << "channel:" << to_string(channel) << ",state:" << to_string(state)
-                                    << ",matrixNo:" << matrixNo << ",lightName:" << lightName << ",state:"
-                                    << to_string(signalLightState.straight);
-                        } else {
-                            LOG(ERROR) << "未知的灯名:" << lightName;
-                        }
+                        signalLightState.left = state;
+                        LOG_IF(INFO, isShowMsgType("SignalLight"))
+                                        << "更新灯态:" << "channel:" << to_string(channel) << ",state:"
+                                        << to_string(state)
+                                        << ",matrixNo:" << matrixNo << ",lightName:left" << ",state:"
+                                        << to_string(signalLightState.left);
+                        break;
+                    }
+                }
+            }
+
+            //直行相同
+            if (relation.straight == channel) {
+                //通道号相同，将状态赋值给对应的灯态
+                //要更新的方向
+                auto matrixNo = relation.dir;
+                //遍历灯态数组，根据方向值找到要更新的方向
+                for (auto &signalLightState: signalLightStates->lstIntersections) {
+                    if (signalLightState.matrixNo == matrixNo) {
+                        //方向相同，然后根据灯名更新状态
+                        signalLightState.straight = state;
+                        LOG_IF(INFO, isShowMsgType("SignalLight"))
+                                        << "更新灯态:" << "channel:" << to_string(channel) << ",state:"
+                                        << to_string(state)
+                                        << ",matrixNo:" << matrixNo << ",lightName:straight" << ",state:"
+                                        << to_string(signalLightState.straight);
+                        break;
+                    }
+                }
+            }
+
+            //右转相同
+            if (relation.right == channel) {
+                //通道号相同，将状态赋值给对应的灯态
+                //要更新的方向
+                auto matrixNo = relation.dir;
+                //遍历灯态数组，根据方向值找到要更新的方向
+                for (auto &signalLightState: signalLightStates->lstIntersections) {
+                    if (signalLightState.matrixNo == matrixNo) {
+                        //方向相同，然后根据灯名更新状态
+                        signalLightState.right = state;
+                        LOG_IF(INFO, isShowMsgType("SignalLight"))
+                                        << "更新灯态:" << "channel:" << to_string(channel) << ",state:"
+                                        << to_string(state)
+                                        << ",matrixNo:" << matrixNo << ",lightName:right" << ",state:"
+                                        << to_string(signalLightState.right);
                         break;
                     }
                 }

@@ -36,6 +36,8 @@ public:
 
     int broadcastSignalLightStates();
 
+    void initSignalLightStates();
+
 private:
     int getMatrixNo();
 

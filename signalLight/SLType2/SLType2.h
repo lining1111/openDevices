@@ -115,8 +115,9 @@ public:
     //转换函数用的关系列表 方向-(左转or直行or右转)-通道号
     typedef struct {
         string dir;
-        string lightName;//"left" "right" "straight"
-        int channel;// -1为未关联通道
+        int left = -1;//左转关联车道 -1为未关联通道
+        int straight = -1;//直行关联车道 -1为未关联通道
+        int right = -1;//右转关联车道 -1为未关联通道
     } SLState_Channel;
 
     int maxDirNum = 8;//最多支持8个方向
