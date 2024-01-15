@@ -95,12 +95,12 @@ int main(int argc, char **argv) {
         }
             break;
         case 1: {
-            //不开启
-            LOG(WARNING) << " SignalLight 开启kafka";
+            //开启 kafka
+            LOG(WARNING) << " SignalLight 开启 kafka";
         }
             break;
         case 2: {
-            //不开启
+            //开启 tcp
             LOG(WARNING) << " SignalLight 开启 tcp";
             SLType2 *slType2 = new SLType2(localConfig.confSignalLight.port);
             slType2->Open();
@@ -110,12 +110,12 @@ int main(int argc, char **argv) {
         }
             break;
         case 3: {
-            //不开启
+            //开启 serial
             LOG(WARNING) << " SignalLight 开启 serial";
         }
             break;
         default: {
-
+            LOG(WARNING) << " SignalLight 开启 不支持的类型";
         }
             break;
     }
