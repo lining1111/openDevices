@@ -1,1 +1,0 @@
-. "/home/lining/CLionProjects/openDevices/conan/build/deactivate_conanrunenv-debug-x86_64.sh"

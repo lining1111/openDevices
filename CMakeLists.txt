@@ -11,18 +11,15 @@ set(CMAKE_CXX_STANDARD 11)
 add_definitions(-D${ARCH})
 
 find_package(gflags REQUIRED)
-find_package(SQLite3 REQUIRED)
-find_package(CURL REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(libuuid REQUIRED)
 find_package(glog REQUIRED)
+find_package(libuuid REQUIRED)
+find_package(SQLite3 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(Poco REQUIRED)
 find_package(xpack REQUIRED)
 find_package(RdKafka REQUIRED)
 
-set(3rdLibs gflags::gflags SQLite::SQLite3 CURL::libcurl openssl::openssl
-        libuuid::libuuid glog::glog fmt::fmt Poco::Poco xpack::xpack RdKafka::rdkafka++)
+set(3rdLibs gflags::gflags libuuid::libuuid glog::glog SQLite::SQLite3 fmt::fmt Poco::Poco xpack::xpack RdKafka::rdkafka++)
 
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")

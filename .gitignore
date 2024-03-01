@@ -1,5 +1,4 @@
 .idea
 cmake-build-debug
 cmake-build-release-aarch64
-cmake-build-debug-aarch64
 conan/build

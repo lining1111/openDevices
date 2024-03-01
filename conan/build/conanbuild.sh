@@ -1,1 +1,0 @@
-. "/home/lining/CLionProjects/openDevices/conan/build/conanbuildenv-debug-x86_64.sh"
