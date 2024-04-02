@@ -9,7 +9,7 @@ xpack/1.0.4
 librdkafka/2.3.0
 [options]
 poco*:enable_data_mysql=False
-#glog*:with_unwind=False
+glog*:with_unwind=False
 [generators]
 CMakeDeps
 CMakeToolchain
