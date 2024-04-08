@@ -3,7 +3,7 @@ gflags/2.2.2
 glog/0.6.0
 libuuid/1.0.3
 sqlite3/3.45.0
-fmt/10.1.1
+fmt/9.0.0
 poco/1.12.0
 xpack/1.0.4
 librdkafka/2.3.0
