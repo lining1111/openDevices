@@ -205,7 +205,6 @@ public:
 //            }
 //        }
 
-        delete[] buf_send;
         return ret;
     }
 };
