@@ -129,56 +129,43 @@ namespace os {
         return out;
     }
 
-    void PrintHex(uint8_t *data, uint32_t len) {
-        int count = 0;
-        for (int i = 0; i < len; i++) {
-            printf("%02x ", data[i]);
-            count++;
-            if (count == 16) {
-                printf("\n");
-                count = 0;
-            }
-        }
-        printf("\n");
-    }
-
-    wstring GbkToUnicode(string str) {
-//    codecvt_byname<wchar_t, char, mbstate_t>*dd=;
-        wstring_convert<chs_codecvt> gbk(new chs_codecvt("zh_CN.GBK"));    //GBK - whar
-
-        return gbk.from_bytes(str);
-    }
-
-    string GbkToUtf8(string str) {
-        return UnicodeToUtf8(GbkToUnicode(str));
-    }
-
-    string Utf8ToGbk(string str) {
-        return UnicodeToGbk(Utf8ToUnicode(str));
-
-    }
-
-    wstring Utf8ToUnicode(string str) {
-        wstring ret;
-
-        wstring_convert<codecvt_utf8<wchar_t>> wcv;
-        ret = wcv.from_bytes(str);
-        return ret;
-    }
-
-    string UnicodeToUtf8(wstring wstr) {
-        string ret;
-        wstring_convert<codecvt_utf8<wchar_t>> wcv;
-        ret = wcv.to_bytes(wstr);
-        return ret;
-    }
-
-    string UnicodeToGbk(wstring wstr) {
-        wstring_convert<chs_codecvt> gbk(new chs_codecvt("zh_CN.GBK"));    //GBK - whar
-        string ret = gbk.to_bytes(wstr);
-        return ret;
-
-    }
+//    wstring GbkToUnicode(string str) {
+////    codecvt_byname<wchar_t, char, mbstate_t>*dd=;
+//        wstring_convert<chs_codecvt> gbk(new chs_codecvt("zh_CN.GBK"));    //GBK - whar
+//
+//        return gbk.from_bytes(str);
+//    }
+//
+//    string GbkToUtf8(string str) {
+//        return UnicodeToUtf8(GbkToUnicode(str));
+//    }
+//
+//    string Utf8ToGbk(string str) {
+//        return UnicodeToGbk(Utf8ToUnicode(str));
+//
+//    }
+//
+//    wstring Utf8ToUnicode(string str) {
+//        wstring ret;
+//
+//        wstring_convert<codecvt_utf8<wchar_t>> wcv;
+//        ret = wcv.from_bytes(str);
+//        return ret;
+//    }
+//
+//    string UnicodeToUtf8(wstring wstr) {
+//        string ret;
+//        wstring_convert<codecvt_utf8<wchar_t>> wcv;
+//        ret = wcv.to_bytes(wstr);
+//        return ret;
+//    }
+//
+//    string UnicodeToGbk(wstring wstr) {
+//        wstring_convert<chs_codecvt> gbk(new chs_codecvt("zh_CN.GBK"));    //GBK - whar
+//        string ret = gbk.to_bytes(wstr);
+//        return ret;
+//
+//    }
 
     void Trim(string &str, char trim) {
         std::string::iterator end_pos = std::remove(str.begin(), str.end(), trim);

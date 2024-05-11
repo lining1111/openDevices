@@ -40,31 +40,25 @@ namespace os {
 
     vector<string> split(const string &in, const string &delim);
 
-    /**
-     * 打印hex输出
-     * @param data
-     * @param len
-     */
-    void PrintHex(uint8_t *data, uint32_t len);
 
-    class chs_codecvt : public codecvt_byname<wchar_t, char, std::mbstate_t> {
-    public:
-        chs_codecvt(string s) : codecvt_byname(s) {
-
-        }
-    };
-
-    string Utf8ToGbk(string);
-
-    string GbkToUtf8(string);
-
-    wstring Utf8ToUnicode(string);
-
-    wstring GbkToUnicode(string);
-
-    string UnicodeToUtf8(wstring);
-
-    string UnicodeToGbk(wstring);
+//    class chs_codecvt : public codecvt_byname<wchar_t, char, std::mbstate_t> {
+//    public:
+//        chs_codecvt(string s) : codecvt_byname(s) {
+//
+//        }
+//    };
+//
+//    string Utf8ToGbk(string);
+//
+//    string GbkToUtf8(string);
+//
+//    wstring Utf8ToUnicode(string);
+//
+//    wstring GbkToUnicode(string);
+//
+//    string UnicodeToUtf8(wstring);
+//
+//    string UnicodeToGbk(wstring);
 
 
     void Trim(string &str, char trim);
